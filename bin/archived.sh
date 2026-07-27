@@ -14,6 +14,7 @@ python ${PIPELINE_DIR}/imgt_gene.py &
 P2=$!
 python ${PIPELINE_DIR}/imgt_geneseq.py &
 P3=$!
+
 # INN data
 python ${PIPELINE_DIR}/imgt_inn.py &
 P4=$!

@@ -1,26 +1,16 @@
-#!/usr/bin/python
-'''
-requirements:
-    - a empty database is created.
-example: python src/pipelines/create_imgt.py
-functions:
-    - build database known as complex2
-    - build tables
-'''
-import os
-import sys
-src_dir = os.path.dirname(os.path.dirname(__file__))
-if src_dir not in sys.path:
-    sys.path.append(src_dir)
+/*
+inn -> inn_seq
+    -> inn_region
+    -> inn_cdomain
+    -> inn_vdomain
+    -> inn_cdr
+    -> inn_gene -> inn_genelist
+                -> inn_gene_seq
 
-from bioomics import BuildComplex
+view_inn_pdb
 
-'''
-inn -> inn_chain
-'''
+*/
 
-
-SQL_TEXT = """
 DROP TABLE IF EXISTS inn;
 CREATE TABLE inn (
     inn_number              VARCHAR(50),
@@ -127,23 +117,15 @@ CREATE TABLE imgt_geneseq (
     seq_type        VARCHAR(100),
     seq             TEXT
 );
-# //
-# DROP TABLE IF EXISTS msa_vregion;
-# CREATE TABLE msa_vregion (
-#     chain_id        VARCHAR(20),
-#     chain_types     VARCHAR(20),
-#     query_fa        VARCHAR(100),
-#     aln_file        VARCHAR(100),
-#     pickle_file     VARCHAR(100),
-#     UNIQUE (chain_id, chain_types)
-# );
-"""
 
-#####################################################################################
-
-if __name__ == "__main__":
-    bc = BuildComplex(verbose=True)
-    for query in SQL_TEXT.split('//'): 
-        res = bc.create_table(query)
-        if res is None:
-            print(f"ERROR. Check the above SQL: {query}\n\n")
+DROP VIEW IF EXISTS view_inn_pdb;
+CREATE VIEW view_inn_pdb AS 
+    SELECT B.inn_chain_id, B.pdb_chain_id, P.pdb_id,
+        I.inn_number, A.common_name, A.inn_name,
+        A.receptor_type, A.receptor_description, I.chain_seq
+    FROM inn_blastp     B
+    LEFT JOIN pdb_chainid    P ON B.pdb_chain_id = P.chain_id
+    LEFT JOIN inn_chain I ON B.inn_chain_id = I.chain_id
+    LEFT JOIN inn       A ON I.inn_number = A.inn_number
+    WHERE B.identity = 1
+;
