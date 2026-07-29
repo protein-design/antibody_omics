@@ -23,15 +23,21 @@ params = {
     'chunk_size':100,
     'group_no': sys.argv[1] if len(sys.argv) > 1 else None,
     'verbose': True if os.getenv('verbose') == 'true' else False,
-    'rawdata_dir': os.getenv('rawdata_dir'),
-    'output_pdb_dir': os.getenv('output_pdb_dir'),
-    'output_protein_dir': os.getenv('output_protein_dir'),
+    'rawdata_dir': Path(os.getenv('rawdata_dir')),
+    'output_dir': Path(os.getenv('output_dir')),
     'host': socket.gethostname(),
 }
+params['rawdata_pdb_dir'] = params['rawdata_dir'] / 'pdb'
+params['absd_dir'] = params['rawdata_dir'] / 'ABSD'
+params['output_pdb_dir'] = params['output_dir'] / 'pdb'
+params['output_protein_dir'] = params['output_dir'] / 'protein'
+params['simulate_dir'] = params['output_dir'] / 'simulate'
+params['predict_dir'] = params['output_dir'] / 'predict'
+params['design_dir'] = params['output_dir'] / 'design'
 meta = defaultdict(int)
 
 
-from bioomics.database import DeleteDb, BuildComplex, UpdateComplex, QueryComplex
+from bioomics.database import DeleteComplex, BuildComplex, UpdateComplex, QueryComplex
 
 def header(func):
     @functools.wraps(func)
@@ -63,8 +69,8 @@ def validate_data(col_name, params, meta):
     rows = QueryComplex(params['verbose']).list_data(query)
     del_pool = []
     for row in rows:
-        pdb_file = os.path.join(params['data_dir'], row[col_name])
-        if not os.path.isfile(pdb_file):
+        pdb_file = params['output_pdb_dir'] / row[col_name]
+        if pdb_file.is_file():
             del_pool.append(row[col_name])
     
     # delete rows

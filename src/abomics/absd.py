@@ -1,7 +1,9 @@
 '''
 antibody sequence database, https://absd.pasteur.cloud/
 '''
+from datetime import datetime
 import os
+from pathlib import Path
 import re
 import pandas as pd
 from Bio import SeqIO
@@ -10,31 +12,47 @@ from .process_data import ProcessData
 
 class Absd(ProcessData):
 
-    def __init__(self, data_dir:str, verbose:bool=False):
+    def __init__(self, data_dir:Path, verbose:bool=False):
         super().__init__(data_dir)
         self.verbose = verbose
 
+    def scan_fasta(self):
+        file_iter = self.recursive_files(self.data_dir)
+        res = []
+        for path in file_iter:
+            if path.suffix == '.fasta':
+                if self.verbose:
+                    print(path)
+                version = path.parent.parent.name
+                release_date = datetime.strptime(version, '%Y-%m-%d')
+                specie = '_'.join(re.split(r'\s|_|\.', path.name)[:2])
+                rec = (release_date, specie, path)
+                res.append(rec)
+        # sort by date
+        res = sorted(res, key=lambda x: x[0])
+        return res
+                
     @staticmethod
     def scan_data(path):
         with open(path, 'r') as f:
             for record in SeqIO.parse(f, 'fasta'):
                 yield record
 
-    # TODO
-    def __call__(self):
-        for specie, path in self.scan_files('fasta'):
-            data = {}
-            for record in self.scan_data(path):
-                _id = self.parse_id(record)
-                if _id not in data:
-                    data[_id] = []
-                rec = {
-                }
-                data[_id].append(rec)
-            outfile = os.path.join(self.data_dir, f"{sepcie}.json")
-            self.save_json(data, outfile)
-            if self.verbose:
-                print(outfile)
+    # # TODO
+    # def __call__(self):
+    #     for specie, path in self.scan_files('fasta'):
+    #         data = {}
+    #         for record in self.scan_data(path):
+    #             _id = self.parse_id(record)
+    #             if _id not in data:
+    #                 data[_id] = []
+    #             rec = {
+    #             }
+    #             data[_id].append(rec)
+    #         outfile = self.data_dir / f"{sepcie}.json"
+    #         self.save_json(data, outfile)
+    #         if self.verbose:
+    #             print(outfile)
 
     def get_records(self, specie_name, record_id):
         res = []
@@ -45,17 +63,8 @@ class Absd(ProcessData):
                         res.append(record)
         return res
 
-    def scan_files(self, extension:str):
-        file_iter = self.recursive_files(self.data_dir)
-        for path in file_iter:
-            if path.endswith(extension):
-                if self.verbose:
-                    print(path)
-                file_name = os.path.basename(path)
-                specie = '_'.join(re.split(r'\s|_|\.', file_name)[:2])
-                yield specie, path
-    
-    
+
+        
     def parse_id(self, record):
         res = str(record.id)
         return res
@@ -95,8 +104,8 @@ class Absd(ProcessData):
         return data, info
 
     def export_datasets(self):
-        outdir = os.path.join(self.data_dir, 'labels')
-        self.init_dir(outdir)
+        outdir = self.data_dir / 'labels'
+        outdir.mkdir(parents=True, exist_ok=True)
         cols = [
             'query_seq', 'query_seq_cdr', 'query_seq_cdr_trim', 'query_seq_cdr_mask',
             'seq', 'seq_cdr', 'seq_cdr_trim', 'seq_cdr_mask',
@@ -111,7 +120,7 @@ class Absd(ProcessData):
             self.export_datasets_all(data, col, outdir)
             self.export_expand_datasets_chain(data, col, outdir)
 
-    def export_datasets_chain(self, data, col, outdir):
+    def export_datasets_chain(self, data, col, outdir:Path):
         # split data by heavy and light chains
         chain_types = {
             'heavy': ['Heavy'],
@@ -124,7 +133,7 @@ class Absd(ProcessData):
 
             # export raw to csv
             res = chain_data[[col, 'label']]
-            outfile = os.path.join(outdir, f'raw_{key}_{col}.csv')
+            outfile = outdir / f'raw_{key}_{col}.csv'
             self.to_label_csv(res, outfile)
 
             # export unqiue only to csv
@@ -137,13 +146,13 @@ class Absd(ProcessData):
                 if len(labels) == 1:
                     res.append([text, labels[0]])
             res = pd.DataFrame(res)
-            outfile = os.path.join(outdir, f'unique_{key}_{col}.csv')
+            outfile = outdir / f'unique_{key}_{col}.csv'
             self.to_label_csv(res, outfile)
 
-    def export_datasets_all(self, data, col, outdir):
+    def export_datasets_all(self, data, col, outdir:Path):
         # export raw to csv
         res = data[[col, 'label']]
-        outfile = os.path.join(outdir, f'raw_all_{col}.csv')
+        outfile = outdir / f'raw_all_{col}.csv'
         self.to_label_csv(res, outfile)
 
         g = data.groupby(col)
@@ -155,10 +164,10 @@ class Absd(ProcessData):
             if len(labels) == 1:
                 res.append([text, labels[0]])
         res = pd.DataFrame(res)
-        outfile = os.path.join(outdir, f'unique_all_{col}.csv')
+        outfile = outdir / f'unique_all_{col}.csv'
         # self.to_label_csv(res, outfile)
 
-    def export_expand_datasets_chain(self, data, col, outdir):
+    def export_expand_datasets_chain(self, data, col, outdir:Path):
         # split data by heavy and light chains
         chain_types = {
             'heavy': ['Heavy'],
@@ -177,6 +186,6 @@ class Absd(ProcessData):
                 res = df3[[col, 'label']]
                 if self.verbose:
                     print('balance datasets:', col, res['label'].value_counts())
-                outfile = os.path.join(outdir, f'frac{frac}_{key}_{col}.csv')
+                outfile = outdir / f'frac{frac}_{key}_{col}.csv'
                 self.to_label_csv(res, outfile)
 

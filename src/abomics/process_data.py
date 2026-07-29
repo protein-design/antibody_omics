@@ -1,14 +1,31 @@
 import json
 import os
+from pathlib import Path
 import re
 import requests
+import subprocess
 
 class ProcessData:
-    def __init__(self, data_dir:str, verbose:bool=False):
+    def __init__(self, data_dir:Path, verbose:bool=False):
         self.data_dir = data_dir
         self.verbose = verbose
         self.data = None
 
+    # def download(self, file_name:str=None, overwrite:bool=False):
+    #     local_file = self.data_dir / file_name
+    #     if overwrite or not local_file.is_file():
+    #         cmd = [
+    #             'wget', f'{url}/{file_name}',
+    #             '-P', self.data_dir,
+    #         ]
+    #         try:
+    #             result= subprocess.run(cmd, check=True, capture_output=True, text=True)
+    #         except Exception as e:
+    #             print(e)
+    #     if local_file.is_file():
+    #         return local_file
+    #     return None    
+    
     @staticmethod
     def init_dir(indir):
         '''
@@ -17,11 +34,11 @@ class ProcessData:
         pool = [indir,]
         while pool:
             curr_dir = pool.pop(0)
-            if not os.path.isdir(curr_dir):
-                parent_dir = os.path.dirname(curr_dir)
-                if os.path.isdir(parent_dir):
+            if not curr_dir.is_dir():
+                parent_dir = curr_dir.parent
+                if parent_dir.is_dir():
                     try:
-                        os.mkdir(curr_dir, 0o777)
+                        curr_dir.mkdir(parents=True, exist_ok=True)
                     except Exception as e:
                         print(e)
                         return False
@@ -30,19 +47,19 @@ class ProcessData:
         return True
 
     @staticmethod
-    def recursive_files(indir): 
+    def recursive_files(indir:Path): 
         '''
         list all files with a given directory and sub directories
         get all files
         '''
         for root, dirs, files in os.walk(indir):
             for filename in list(files):
-                out_file = os.path.join(root, filename)
-                if os.path.isfile(out_file) and out_file.find('/.') == -1:
+                out_file = Path(root) / filename
+                if out_file.is_file() and str(out_file).find('/.') == -1:
                     yield out_file
 
     @staticmethod
-    def to_label_csv(df, outfile):
+    def to_label_csv(df, outfile:Path):
         df = df.sample(frac=1, replace=False, random_state=1)
         df.to_csv(outfile, index=False, header=False)
         print(df.shape, outfile)
@@ -66,9 +83,9 @@ class ProcessData:
             print(e)
         return False
 
-    def load_data(self, json_file, default_data=None):
+    def load_data(self, json_file:Path, default_data=None):
         # load data
-        if os.path.isfile(json_file):
+        if json_file.is_file():
             self.data = ProcessData.load_json(json_file)
         else:
             self.data = default_data
@@ -89,12 +106,12 @@ class ProcessData:
                 k += 1
         print(f"Update data: {func}, succeed={s}, skipped={k}")
 
-    def scan_text(self, indir:str=None):
+    def scan_text(self, indir:Path=None):
         if indir is None:
             indir = self.data_dir
         file_iter = self.recursive_files(indir)
         for infile in file_iter:
-            acc = os.path.basename(infile)
+            acc = infile.name
             with open(infile, 'r') as f:
                 text = f.read()
                 yield acc, text
@@ -102,4 +119,4 @@ class ProcessData:
     def pull_list(self, url):
         response = requests.get(url)
         names = re.findall(r'<a.*>(.+)</a>', response.text)
-    
+   

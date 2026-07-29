@@ -3,9 +3,9 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bio-omics"
+name = "antibody-omics"
 version = "0.1.0"
-description = "ETL of structure omics data"
+description = "ETL of antibody omics data"
 readme = "README.md"
 authors = [
     {name = "Tiezheng Yuan", email = "tiezhengyuan@hotmail.com"}
@@ -63,7 +63,7 @@ package = true
 where = ["src"]
 
 [project.scripts]
-bomics = "app.main:main"
+abomics = "app.main:main"
 test-env = "scripts.test_env:main"
 test-pp = "pipelines.test:main"
 

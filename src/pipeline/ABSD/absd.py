@@ -1,14 +1,14 @@
 '''
 example:  5 species
-    - parallel -j5 python app.py absd_source 4 ::: {0..4}
-    - python app.py absd_source 4
+    - parallel -j5 abomics absd_source 4 ::: {0..4}
+    - abomics absd_source 4
 functions:
     - download data from ABSD
     - put data to table absd_source
 '''
 import re
-from ..ab_helper import *
-from src.abomics import Absd
+from src.ab_helper import *
+from abomics import Absd
 
 def scan(params):
     files = QueryComplex(params['verbose']).unique_values(params['table_name'], 'faa_file')
