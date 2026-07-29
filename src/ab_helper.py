@@ -29,6 +29,7 @@ params = {
 }
 params['rawdata_pdb_dir'] = params['rawdata_dir'] / 'pdb'
 params['absd_dir'] = params['rawdata_dir'] / 'ABSD'
+params['imgt_dir'] = params['rawdata_dir'] / 'IMGT'
 params['output_pdb_dir'] = params['output_dir'] / 'pdb'
 params['output_protein_dir'] = params['output_dir'] / 'protein'
 params['simulate_dir'] = params['output_dir'] / 'simulate'

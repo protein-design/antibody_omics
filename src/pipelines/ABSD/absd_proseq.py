@@ -19,7 +19,8 @@ def retrieve(params, seq_len):
             AND b.seq_id IS NULL
     """
     qc = QueryComplex(params['verbose'])
-    return qc.pack_proseq(query)
+    rows = qc.list_data(query)
+    return qc.pack_proseq(rows)
 
 def build(data_iter, params, meta):
     qc = QueryComplex(params['verbose'])
@@ -31,13 +32,7 @@ def build(data_iter, params, meta):
         meta['parsed'] += len(parsed)
         
         # insert new seqs into proseq_* tables
-        proseq_cols = ['source', 'seq']
-        new_records = []
-        for i in unparsed:
-            rec = (params['source'], i['seq'])
-            if rec not in new_records:
-                new_records.append(rec)
-        num_insertion, fail = bc.insert_batch_records(new_records, table_name, proseq_cols)
+        num_insertion, fail = bc.insert_proseq(params['source'], table_name, unparsed)
         meta['new_insertion'] += num_insertion
         meta['fail_insert'] += len(fail)
         # parse new seqs with seqid

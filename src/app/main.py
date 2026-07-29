@@ -15,6 +15,16 @@ pool = {
     'absd_source': 'ABSD.absd_source',
     'absd_proseq': 'ABSD.absd_proseq',
 
+    #IMGT
+    'inn': 'IMGT.inn',
+    'inn_seq': 'IMGT.inn_seq',
+    'inn_region': 'IMGT.inn_region',
+    'inn_cdomain': 'IMGT.inn_cdomain',
+    'inn_vdomain': 'IMGT.inn_vdomain',
+    'inn_cdr': 'IMGT.inn_cdr',
+    'imgt_genelist': 'IMGT.imgt_genelist',
+    'imgt_gene': 'IMGT.imgt_gene',
+    'imgt_geneseq': 'IMGT.imgt_geneseq',
     
     # align
     'align_vfrag': 'align.align_vfrag',

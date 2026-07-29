@@ -2,26 +2,13 @@
 requirements:
     - IMGT/INN data are downloaded
 example: 
-    - python app.py inn
+    - abomics inn
 functions:
     - put data to table inn
 '''
 
-from ..ab_helper import *
-from bioomics import Dir
-from src.abomics import ParseImgtAnnot
-
-def retrieve(params, meta):
-    indir = os.path.join(params['imgt_dir'], '3Dstructure-DB', 'IMGT3DFlatFiles')
-    for gz_file in Dir(indir).recursive_files():
-        if gz_file.endswith('.inn.gz'):
-            try:
-                inn_data = ParseImgtAnnot(gz_file)()
-                meta['inn_data'] += 1
-                yield inn_data
-            except Exception as e:
-                print(f"{gz_file}, error={e}")
-                meta['invalid_inn'] += 1
+from src.ab_helper import *
+from abomics import PullData
 
 def build(data_iter, meta):
     names = ('inn_number', 'cas_number', 'common_name', 'inn_name',
@@ -42,7 +29,6 @@ def build(data_iter, meta):
 if __name__ == "__main__":
     params.update({
         'chunk_size': 50,
-        'imgt_dir': os.getenv('imgt_dir'),
         'table_name': 'inn',
         'table_cols': ['inn_file', 'inn_number', 'cas_number',
             'common_name', 'inn_name', 'proposed_list',
@@ -51,11 +37,10 @@ if __name__ == "__main__":
             'molecular_formula', 'glycosylation_sites',]
     })
     # pull records from IMGT
-    data_iter = retrieve(params, meta)
+    data_iter = PullData(params['imgt_dir'], meta).flat_inn()
     record_iter = build(data_iter, meta)
     bc = BuildComplex(params['verbose'], params['chunk_size'])
     bc.empty_table(params['table_name'])
     bc.insert_batch_records(record_iter, params['table_name'], params['table_cols'])
     
     footer(meta)
-

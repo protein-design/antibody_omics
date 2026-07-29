@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import re
 import requests
 import pandas as pd
@@ -10,7 +10,7 @@ from .process_seq import ProcessSeq
 class Imgt(ProcessData):
     url = 'https://www.imgt.org/'
 
-    def __init__(self, data_dir:str, verbose:bool=False):
+    def __init__(self, data_dir:Path, verbose:bool=False):
         super().__init__(data_dir, verbose)
     
     '''
@@ -21,7 +21,7 @@ class Imgt(ProcessData):
         for inn_data in self.get_inn_data():
             if inn_data:
                 data.append(inn_data)
-        outfile = os.path.join(self.data_dir, 'imgt_inn.json')
+        outfile = self.data_dir / 'imgt_inn.json'
         self.save_json(data, outfile)
         if self.verbose:
             print(f"Save INN data to {outfile}")
@@ -34,7 +34,7 @@ class Imgt(ProcessData):
             key = f'vdomain_{name}'
             res[key] = []
     
-        infile = os.path.join(self.data_dir, 'imgt_inn.json')
+        infile = self.data_dir / 'imgt_inn.json'
         data = self.load_data(infile, [])
         for rec in data:
             inn_number = rec['inn_number'][0]
@@ -70,7 +70,7 @@ class Imgt(ProcessData):
         for key in ('vdomain_seq',):
             outfile = f"{outprefix}_{key}.faa"
             ProcessSeq.to_fasta(res[key], outfile)
-            fa_files.append(os.path.abspath(outfile))
+            fa_files.append(outfile.absolute())
         return fa_files
 
 
@@ -92,12 +92,12 @@ class Imgt(ProcessData):
                 specie_type_url = f"{specie_url}{specie_type}/"
                 response = requests.get(specie_type_url)
                 file_names = re.findall(r'<a.*>(.+\.fasta)</a>', response.text)
-                outdir = os.path.join(self.data_dir, 'V-QUEST', specie, specie_type)
+                outdir = self.data_dir / 'V-QUEST' / specie / specie_type
                 self.init_dir(outdir)
                 for file_name in file_names:
-                    file_url = os.path.join(specie_type_url, file_name)
-                    outfile = os.path.join(outdir, file_name)
-                    if not os.path.isfile(outfile):
+                    file_url = specie_type_url / file_name
+                    outfile = outdir / file_name
+                    if not outfile.is_file():
                         with open(outfile, 'w') as f:
                             response = requests.get(file_url)
                             f.write(response.text)
@@ -112,13 +112,13 @@ class Imgt(ProcessData):
             start = 1 
         if end is None:
             end = 2000
-        outdir = os.path.join(self.data_dir, 'mAb-DB')
-        self.init_dir(outdir)
+        outdir = self.data_dir / 'mAb-DB'
+        outdir.mkdir(parents=True, exist_ok=True)
 
         s, f, k = 0 ,0, 0
         for abid in range(start, end):
-            outfile = os.path.join(outdir, str(abid))
-            if os.path.isfile(outfile):
+            outfile = outdir / str(abid)
+            if outfile.is_file():
                 k += 1
             else:
                 text = self.pull_mabdb_page(abid)
@@ -143,7 +143,7 @@ class Imgt(ProcessData):
     '''
     def retrieve_mabdb(self, json_file):
         self.data = self.load_json(json_file)
-        indir = os.path.join(self.data_dir, 'mAb-DB')
+        indir = self.data_dir / 'mAb-DB'
         text_iter = self.scan_text(indir)
         self.retrieve_data(text_iter, self.parse_imgt)
         self.retrieve_data(text_iter, self.parse_inn)

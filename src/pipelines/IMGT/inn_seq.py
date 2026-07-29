@@ -1,80 +1,67 @@
 '''
 example: 
-    - python app.py inn_seq
+    - abomics inn_seq
 functions:
     - put data to table inn_seq
 '''
-
-from ..ab_helper import *
-from src.abomics import Dir, Imgt, ParseImgtAnnot
-
-def pull_data(params, meta):
-    res = []
-    indir = os.path.join(params['imgt_dir'], '3Dstructure-DB', 'IMGT3DFlatFiles')
-    for gz_file in Dir(indir).recursive_files():
-        if gz_file.endswith('.inn.gz'):
-            try:
-                inn_data = ParseImgtAnnot(gz_file)()
-                meta['inn_data'] += 1
-                yield inn_data
-            except Exception as e:
-                print(f"{gz_file}, error={e}")
-                meta['invalid_inn'] += 1
+from src.ab_helper import *
+from abomics import PullData
 
 def build(inn_data, meta):
     # retrieve
-    records, seqs = [], []
+    rows = []
     for inn_data in data_iter:
         inn_number = ','.join(inn_data['inn_number'])
         for chain in inn_data.get('chains', []):
             meta['records'] += 1
             seq = chain.get('chain_seq')
-            rec = [
-                inn_number,
-                chain['chain_id'],
-                chain['chain_description'],
-                seq,
-            ]
-            records.append(rec)
-            seqs.append(seq)
+            row = {
+                'inn_number': inn_number,
+                'inn_chain_id': chain['chain_id'],
+                'chain_desc': chain['chain_description'],
+                'seq': seq,
+            }
+            rows.append(row)
 
     #insert seq into pro_seq
     bc = BuildComplex(params['verbose'])
-    num_succeed, fail = bc.insert_proseq(seqs, params['source'])
-    meta['new_seqs'] = num_succeed
-    meta['no_insertion'] = len(fail)
-
-    #parse id
     qc = QueryComplex(params['verbose'])
-    seq_seqids, unparsed = qc.parse_seqid(seqs)
-    meta['parsed_ids'] = len(seq_seqids)
-    meta['unparse'] = len(unparsed)
-    for rec in records:
-        seq = rec[-1]
-        if seq in seq_seqids:
-            seq_id = seq_seqids[seq]
-            rec.append(seq_id)
-        else:
-            rec.append(None)
-        yield tuple(rec)
+    packed_rows = qc.pack_proseq(rows)
+    for (table_name, seq_len), rows in packed_rows:
+        # detect known seqs
+        parsed, unparsed = qc.parse_seqid(table_name, seq_len, rows)
+
+        # insert new seqs
+        num_insertion, fail = bc.insert_proseq(params['source'], table_name, unparsed)
+        meta['new_insertion'] += num_insertion
+        meta['fail_insert'] += len(fail)
+        # parse new seqs
+        new_parsed, fail = qc.parse_seqid(table_name, seq_len, unparsed)
+        meta['fail_insert'] += len(fail)
+
+        #build record
+        for row in parsed + new_parsed:
+            yield tuple([row[i] for i in params['table_cols']])
+            meta['records'] += 1    
+
     
 if __name__ == "__main__":
     params.update({
         'chunk_size': 50,
-        'imgt_dir': os.getenv('imgt_dir'),
-        'table_name': 'inn_seq',
-        'table_cols': ['inn_number', 'inn_chain_id', 
-            'description', 'seq', 'seq_id',],
         'source': 'IMGT-INN',
+        'table_name': 'inn_seq',
+        'table_cols': ['inn_number', 'inn_chain_id', 'chain_desc',
+            'seq', 'proseq_name', 'seq_id',],
     })
+    # empty table
+    DeleteComplex(params['verbose']).empty_table(params['table_name'])
+        
     # pull records from IMGT
-    inn = Imgt(params['imgt_dir'], params['verbose'])
-    data_iter = pull_data(params, meta)
+    data_iter = PullData(params['imgt_dir'], meta).flat_inn()
     record_iter = build(data_iter, meta)
     
+    # insert data to inn_seq    
     bc = BuildComplex(params['verbose'], params['chunk_size'])
-    bc.empty_table(params['table_name'])
     bc.insert_batch_records(record_iter, params['table_name'], params['table_cols'])
     
     footer(meta)
-

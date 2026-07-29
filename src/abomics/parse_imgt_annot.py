@@ -2,17 +2,18 @@
 IMGT
 '''
 import os
+from pathlib import Path
 import re
 import gzip
 
 class ParseImgtAnnot:
 
-    def __init__(self, infile):
+    def __init__(self, infile:Path):
         self.infile = infile
         self.lines = self._load()
 
     def _load(self) -> list:
-        if os.path.isfile(self.infile):
+        if self.infile.is_file():
             with gzip.open(self.infile, 'rt') as f:
                 lines = f.read().split('\n')
                 return lines
@@ -251,7 +252,7 @@ class ParseImgtAnnot:
     def __call__(self):
         # the order of methods does matter
         res = {
-            'inn_file': self.infile,
+            'inn_file': str(self.infile),
             'inn_number': self.next_line('INN number'),
             'common_name': self.next_line('Common name'),
             'inn_name': self.next_line('INN name'),

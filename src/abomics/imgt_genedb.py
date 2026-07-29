@@ -27,13 +27,13 @@ import os
 import pandas as pd
 
 from .imgt import Imgt
-from bioomics import ProcessIgblast
+from .process_igblast import ProcessIgblast
 
 class ImgtGenedb(Imgt):
 
-    def __init__(self, data_dir:str, verbose:bool=False):
+    def __init__(self, data_dir:Path, verbose:bool=False):
         super().__init__(data_dir, verbose)
-        self.data_dir = os.path.join(self.data_dir, 'GENE-DB')
+        self.data_dir = self.data_dir / 'GENE-DB'
         # keys: specie, gene_name, region_name
         self.data = {}
     
@@ -53,10 +53,10 @@ class ImgtGenedb(Imgt):
         self.parse_fasta()
 
         # save data
-        outdir = os.path.join(self.data_dir, 'genelist')
-        Path(outdir).mkdir(parents=True, exist_ok=True)
+        outdir = self.data_dir / 'genelist'
+        outdir.mkdir(parents=True, exist_ok=True)
         for specie, data1 in self.data.items():
-            json_file = os.path.join(outdir, f"{specie}.json")
+            json_file = outdir/  f"{specie}.json"
             self.save_json(data1, json_file)
         if self.verbose:
             print('Export genes to ', outdir)
@@ -77,7 +77,7 @@ class ImgtGenedb(Imgt):
         - the NCBI Gene ID
         '''
         data = []
-        infile = os.path.join(self.data_dir, 'IMGTGENEDB-GeneList.txt')
+        infile = self.data_dir / 'IMGTGENEDB-GeneList'
         with open(infile, 'r') as f:
             header = next(f).rstrip()
             header = header.split(';')
@@ -214,7 +214,7 @@ class ImgtGenedb(Imgt):
         '''
         # define outdir
         ref_type = 'AA-WithoutGaps-F+ORF+inframeP'
-        outdir = os.path.join(self.data_dir, ref_type, 'region_igblastdb')
+        outdir = self.data_dir / ref_type, 'region_igblastdb'
         p = ProcessIgblast(outdir, self.verbose)
 
         # build db by region
@@ -228,8 +228,8 @@ class ImgtGenedb(Imgt):
         return meta
 
     def organism_region_fasta_file(self, ref_type, organism, region_name):
-        outdir = os.path.join(self.data_dir, ref_type, 'organism', organism)
-        Path(outdir).mkdir(parents=True, exist_ok=True)
+        outdir = self.data_dir / ref_type / 'organism' / organism
+        outdir.mkdir(parents=True, exist_ok=True)
         return os.path.join(outdir, f"{region_name}.fasta")
 
     def build_organism_fasta(self):
@@ -279,7 +279,7 @@ class ImgtGenedb(Imgt):
         regions = ['V-REGION', 'D-REGION', 'J-REGION', 'C-REGION']
         meta = {r:[] for r in regions}
         for specie in species:
-            outdir = os.path.join(self.data_dir, ref_type, 'organism_igblastdb', specie)
+            outdir = self.data_dir / ref_type / 'organism_igblastdb' / specie
             p = ProcessIgblast(outdir, self.verbose)
             for region in regions:
                 fa_file = self.organism_region_fasta_file(ref_type, specie, region)
@@ -289,7 +289,7 @@ class ImgtGenedb(Imgt):
 
     def genedb_region(self, ref_type, specie, region):
         v = []
-        infile = os.path.join(self.data_dir, ref_type, specie, f'{region}.fasta')
+        infile = self.data_dir / ref_type / specie / f'{region}.fasta'
         with open(infile, 'r') as f:
             parser = SeqIO.parse(f, 'fasta')
             for record in parser:

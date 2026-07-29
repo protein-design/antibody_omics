@@ -2,13 +2,13 @@
 requirements:
     - IMGT GeneDB
 example:
-    - python app.py imgt_gene
+    - abomics imgt_gene
 functions:
     - build table imgt_gene
 '''
 
-from ..ab_helper import *
-from bioomics import ImgtGenedb
+from src.ab_helper import *
+from abomics import ImgtGenedb
 
 def build_records(params, meta):
     ig = ImgtGenedb(params['imgt_dir'], params['verbose'])
@@ -36,18 +36,19 @@ def build_records(params, meta):
 if __name__ == "__main__":
     params.update({
         'chunk_size': 50,
-        'imgt_dir': os.getenv("imgt_dir"),
         'table_name': 'imgt_gene',
         'table_cols': ['record_id', 'specie', 'isotype', 'chain_type',
         'gene_name', 'allele_name', 'region_name'],
-
     })
+    
+    # empty table
+    DeleteComplex(params['verbose']).empty_table(params['table_name'])
 
+    # retrieve data
+    record_iter = build_records(params, meta)
+        
     print(f"Try to insert genelist into table {params['table_name']}")
     bc = BuildComplex(params['verbose'], params['chunk_size'])
-    bc.empty_table(params['table_name'])
-
-    record_iter = build_records(params, meta)
     bc.insert_batch_records(record_iter, params['table_name'], params['table_cols'])
 
     footer(meta)

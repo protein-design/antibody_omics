@@ -27,19 +27,20 @@ CREATE TABLE inn (
     inn_file                VARCHAR(100),
     CONSTRAINT pk_inn PRIMARY KEY (inn_number)
 );
-//
+
 DROP TABLE IF EXISTS inn_seq;
 CREATE TABLE inn_seq (
     inn_number      VARCHAR(50),
     inn_chain_id    VARCHAR(50) PRIMARY KEY,
-    description     VARCHAR(200),
+    chain_desc      VARCHAR(200),
     seq_len         INT GENERATED ALWAYS AS (LENGTH(seq)) STORED,
     seq             TEXT,
+    proseq_name     VARCHAR(20),
     seq_id          INT,
     CONSTRAINT fk_innseq_inn FOREIGN KEY (inn_number)
         REFERENCES inn(inn_number) ON DELETE CASCADE
 );
-//
+
 DROP TABLE IF EXISTS inn_region;
 CREATE TABLE inn_region (
     chain_id        VARCHAR(50),
@@ -49,7 +50,7 @@ CREATE TABLE inn_region (
     end             INT,
     seq             TEXT
 );
-//
+
 DROP TABLE IF EXISTS inn_cdomain;
 CREATE TABLE inn_cdomain (
     chain_id        VARCHAR(50),
@@ -58,7 +59,7 @@ CREATE TABLE inn_cdomain (
     seq             TEXT,
     seq_align       TEXT
 );
-//
+
 DROP TABLE IF EXISTS inn_vdomain;
 CREATE TABLE inn_vdomain (
     chain_id            VARCHAR(50),
@@ -73,7 +74,7 @@ CREATE TABLE inn_vdomain (
     seq_cdr_mask        TEXT,
     seq_align_cdr_mask  TEXT
 );
-//
+
 DROP TABLE IF EXISTS inn_cdr;
 CREATE TABLE inn_cdr (
     chain_id        VARCHAR(50),
@@ -84,7 +85,7 @@ CREATE TABLE inn_cdr (
     align_end       INT,
     align_length    INT
 );
-//
+
 DROP TABLE IF EXISTS imgt_genelist;
 CREATE TABLE imgt_genelist (
     species             VARCHAR(50),
@@ -99,7 +100,7 @@ CREATE TABLE imgt_genelist (
     chain               VARCHAR(10),
     domain              VARCHAR(5)
 );
-//
+
 DROP TABLE IF EXISTS imgt_gene;
 CREATE TABLE imgt_gene (
     record_id       VARCHAR(100),
@@ -110,7 +111,7 @@ CREATE TABLE imgt_gene (
     allele_name     VARCHAR(20),
     region_name     VARCHAR(50)
 );
-//
+
 DROP TABLE IF EXISTS imgt_geneseq;
 CREATE TABLE imgt_geneseq (
     record_id       VARCHAR(100),
