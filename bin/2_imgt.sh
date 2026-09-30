@@ -25,6 +25,13 @@ ${APP} imgt_geneseq &
 P3=$!
 wait $P1 $P2 $P3
 
+# references
+${APP} imgt_vquest_ref &
+P1=$!
+${APP} imgt_collect &
+P2=$!
+wait $P1 $P2
+
 # multiple alignment with IMGT germline
 # parallel -j4 ${APP} imgt_msa ::: {0..237}
 

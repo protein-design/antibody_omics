@@ -25,8 +25,16 @@ pool = {
     'imgt_genelist': 'IMGT.imgt_genelist',
     'imgt_gene': 'IMGT.imgt_gene',
     'imgt_geneseq': 'IMGT.imgt_geneseq',
+    'imgt_vquest_ref': 'IMGT.imgt_vquest_dbref',
+    'imgt_collect': 'IMGT.imgt_collect',
     
-    # align
+    # other database
+    'aacdb': 'other.aacdb',
+    'sabdab': 'other.sabdab',
+    'sabdab_chain': 'other.sabdab_chain',
+    'abybank': 'other.abybank',
+    
+    # antibody numbering
     'align_vfrag': 'align.align_vfrag',
     'align_vregion': 'align.align_vregion',
     'align_dregion': 'align.align_dregion',
@@ -34,6 +42,10 @@ pool = {
     'label_antibody': 'align.label_antibody',
     # 'anarci': 'immune.anarci',
 
+    #epitope
+    'pdb_epi': 'epitope.pdb_epi',
+    'uniprot_epi': 'epitope.uniprot_epi',
+    
     #other
     'move': 'clean.move',
     'test': 'test',

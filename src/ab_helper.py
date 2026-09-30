@@ -8,6 +8,7 @@ import functools
 import os
 import sys
 import socket
+import torch
 
 bioomics_path = '/home/yuan/bio/bio_omics/src'
 for _path in (bioomics_path,):
@@ -25,7 +26,9 @@ params = {
     'verbose': True if os.getenv('verbose') == 'true' else False,
     'rawdata_dir': Path(os.getenv('rawdata_dir')),
     'output_dir': Path(os.getenv('output_dir')),
+    'igblast_bin': Path(os.getenv('igblast_bin')),
     'host': socket.gethostname(),
+    'gpu': torch.cuda.is_available(),
 }
 params['rawdata_pdb_dir'] = params['rawdata_dir'] / 'pdb'
 params['absd_dir'] = params['rawdata_dir'] / 'ABSD'
@@ -87,6 +90,7 @@ def validate_data(col_name, params, meta):
             meta['delete_rows'] += len(values)
             print(i, end=' ')
         print(f'{n}\n')
+
 
 def footer(meta, params:dict={}):
     # update table meta_execute with end time

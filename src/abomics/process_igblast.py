@@ -8,21 +8,22 @@ import subprocess
 
 class ProcessIgblast:
 
-    def __init__(self, bin_dir:Path, outdir:Path=None, verbose:bool=False):
+    def __init__(self, bin_dir:str, verbose:bool=False):
         # igblast bin
-        self.bin_dir = bin_dir
-        if self.bin_dir not in sys.path:
-            sys.path.append(str(self.bin_dir))
-        # outdir
-        self.outdir = outdir
-        outdir.mkdir(parents=True, exist_ok=True)
+        self.bin_dir = Path(bin_dir)
+        if bin_dir not in sys.path:
+            sys.path.append(bin_dir)
         # print information
         self.verbose = verbose
 
-    def build_prot_db(self, fa_file:Path, bin_dir:Path=None):
-        exe = 'makeblastdb' if bin_dir is None else bin_dir / 'makeblastdb'
-        outdir = self.outdir if self.outdir else fa_file.parent
-        outprefix = str(outdir  / fa_file.stem)
+    def build_pro_db(self, fa_file:Path, outdir:Path=None):
+        exe = 'makeblastdb' if self.bin_dir is None else str(self.bin_dir / 'makeblastdb')
+        if outdir is None:
+            outdir = fa_file.parent
+        else:
+            outdir.mkdir(parents=True, exist_ok=True)
+        outprefix = str(outdir / fa_file.stem)
+        
         cmd = [exe, '-parse_seqids', '-dbtype', 'prot', '-in', str(fa_file), '-out', outprefix,]
         try:
             if self.verbose:

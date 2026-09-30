@@ -7,11 +7,12 @@ from .parse_xml import ParseXml
 from .process_data import ProcessData
 from .process_seq import ProcessSeq
 
-class Imgt(ProcessData):
+class Imgt:
     url = 'https://www.imgt.org/'
 
-    def __init__(self, data_dir:Path, verbose:bool=False):
-        super().__init__(data_dir, verbose)
+    def __init__(self, imgt_dir:Path, verbose:bool=False):
+        self.imgt_dir = imgt_dir
+        self.verbose = verbose
     
     '''
     3D-DB: INN
@@ -21,7 +22,7 @@ class Imgt(ProcessData):
         for inn_data in self.get_inn_data():
             if inn_data:
                 data.append(inn_data)
-        outfile = self.data_dir / 'imgt_inn.json'
+        outfile = self.imgt_dir / 'imgt_inn.json'
         self.save_json(data, outfile)
         if self.verbose:
             print(f"Save INN data to {outfile}")
@@ -34,7 +35,7 @@ class Imgt(ProcessData):
             key = f'vdomain_{name}'
             res[key] = []
     
-        infile = self.data_dir / 'imgt_inn.json'
+        infile = self.imgt_dir / 'imgt_inn.json'
         data = self.load_data(infile, [])
         for rec in data:
             inn_number = rec['inn_number'][0]
@@ -75,36 +76,6 @@ class Imgt(ProcessData):
 
 
     '''
-    download V-quest
-    '''
-    def download_vquest(self):
-        info = {}
-        endpoint = f"{self.url}download/V-QUEST/IMGT_V-QUEST_reference_directory/"
-        response = requests.get(endpoint)
-        species = re.findall(r'<a.*>(.+)/</a>', response.text)
-        for specie in species:
-            info[specie] = {}
-            specie_url = f"{endpoint}{specie}/"
-            response = requests.get(specie_url)
-            specie_types = re.findall(r'<a.*>(.+)/</a>', response.text)
-            for specie_type in specie_types:
-                info[specie][specie_type] = []
-                specie_type_url = f"{specie_url}{specie_type}/"
-                response = requests.get(specie_type_url)
-                file_names = re.findall(r'<a.*>(.+\.fasta)</a>', response.text)
-                outdir = self.data_dir / 'V-QUEST' / specie / specie_type
-                self.init_dir(outdir)
-                for file_name in file_names:
-                    file_url = specie_type_url / file_name
-                    outfile = outdir / file_name
-                    if not outfile.is_file():
-                        with open(outfile, 'w') as f:
-                            response = requests.get(file_url)
-                            f.write(response.text)
-                    info[specie][specie_type].append(outfile)
-        return info
-
-    '''
     download mAbDB
     '''
     def pull_mabdb(self, start:int=None, end:int=None):
@@ -112,7 +83,7 @@ class Imgt(ProcessData):
             start = 1 
         if end is None:
             end = 2000
-        outdir = self.data_dir / 'mAb-DB'
+        outdir = self.imgt_dir / 'mAb-DB'
         outdir.mkdir(parents=True, exist_ok=True)
 
         s, f, k = 0 ,0, 0
@@ -143,7 +114,7 @@ class Imgt(ProcessData):
     '''
     def retrieve_mabdb(self, json_file):
         self.data = self.load_json(json_file)
-        indir = self.data_dir / 'mAb-DB'
+        indir = self.imgt_dir / 'mAb-DB'
         text_iter = self.scan_text(indir)
         self.retrieve_data(text_iter, self.parse_imgt)
         self.retrieve_data(text_iter, self.parse_inn)

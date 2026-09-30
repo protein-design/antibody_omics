@@ -1,13 +1,12 @@
 #! /usr/bin/bash
-
-APP=/home/yuan/bio/antibody_omics/app.py
+APP="uv --direcotry=/home/yuan/bio/antibody_omics run abomics"
 
 echo "Try to download data from database AACDB"
-python ${APP} aacdb
+${APP} aacdb
 
 echo "Try to download data from database SAbDab"
-python ${APP} sabdab
-python ${APP} sabdab_chain
+${APP} sabdab
+${APP} sabdab_chain
 
 echo "Try to download data from database abYbank"
-python ${APP} abybank
+${APP} abybank

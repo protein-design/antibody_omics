@@ -2,6 +2,7 @@
 import os
 import re
 import subprocess
+from pathlib import Path
 
 class Dir:
     def __init__(self, indir):
@@ -35,7 +36,7 @@ class Dir:
             for filename in list(files):
                 out_file = os.path.join(root, filename)
                 if os.path.isfile(out_file) and out_file.find('/.') == -1:
-                    yield out_file
+                    yield Path(out_file)
 
     def compress_files(self, file_extension:str):
         '''
