@@ -14,6 +14,8 @@ function:
 import time
 from ab_helper import *
 
+from bioomics import ProcessIgblast, ProcessBlast, ProcessFasta
+
 def main():
     params.update({
         'script': sys.argv[0],

@@ -1,14 +1,14 @@
 '''
 Download data from database SAbDab https://opig.stats.ox.ac.uk
 example: 
-    - python app.py sabdab
+    - abomics sabdab
 functions:
     - download data from SAbDab
     - put data to table sabdab
 '''
 
-from ..ab_helper import *
-from src.abomics import Sabdab
+from src.ab_helper import *
+from abomics import Sabdab
 
 
 if __name__ == '__main__':
@@ -36,9 +36,9 @@ if __name__ == '__main__':
     # download summary/*.tsv
     record_iter = sab.download_summary(sabdab_ids, meta)
 
+    DeleteComplex(params['verbose']).empty_table(params['table_name'])
     # insertion
     bc = BuildComplex(params['verbose'], params['chunk_size'])
-    bc.empty_table(params['table_name'])
     bc.insert_batch_records(record_iter, params['table_name'], params['table_cols'])
 
     footer(meta)

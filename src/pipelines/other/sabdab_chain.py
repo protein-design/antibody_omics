@@ -1,7 +1,7 @@
 '''
 Download data from database SAbDab https://opig.stats.ox.ac.uk
 example: 
-    - python app.py sabdab_chain
+    - abomics sabdab_chain
 functions:
     - download data from SAbDab
     - put data to table sabdab_chain
@@ -9,7 +9,7 @@ functions:
 import pandas as pd
 import numpy as np
 
-from ..ab_helper import *
+from src.ab_helper import *
 
 def retrieve(params, meta):
     query = """
@@ -23,22 +23,20 @@ def retrieve(params, meta):
 def prepare_data(rows):
     for row in rows:
         pdb_id = row['pdb_id']
-        path = row['summary_file']
-        df = pd.read_csv(path, sep='\t')
+        df = pd.read_csv(row['summary_file'], sep='\t')
         for _, row in df.iterrows():
             row = row.replace({
                 np.nan: None,
                 'NOT': None,
             })
             if row.get('pdb'):
-                pdb_id = str(row['pdb']).upper()
                 resolution = row.get('resolution')
                 if resolution is None:
                     resolution = 0
                 elif isinstance(resolution, str):
                     resolution = float(resolution.split(',')[0])
                 record = (
-                    pdb_id,
+                    pdb_id.upper(),
                     row['model'],
                     row['Hchain'],
                     row['Lchain'],
@@ -58,10 +56,12 @@ if __name__ == '__main__':
             'antigen_chain', 'antigen_type', 'resolution'],
     })
 
+    DeleteComplex(params['verbose']).empty_table(params['table_name'])
+    
     rows = retrieve(params, meta)    
     record_iter = prepare_data(rows)
+
     bc = BuildComplex(params['verbose'], params['chunk_size'])
-    bc.empty_table(params['table_name'])
     bc.insert_batch_records(record_iter, params['table_name'], params['table_cols'])
 
     print(meta)
